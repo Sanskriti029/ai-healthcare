@@ -1,0 +1,148 @@
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Activity, Menu, X } from "lucide-react";
+import { useState } from "react";
+
+const Navbar = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const token = localStorage.getItem("token");
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
+
+  const navItems = [
+    { label: "Home", path: "/" },
+    ...(token
+      ? [
+          { label: "Symptom Analyzer", path: "/triage" },
+          { label: "Appointment", path: "/appointment" },
+          { label: "Dashboard", path: "/dashboard" },
+        ]
+      : []),
+  ];
+
+  return (
+    <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-md">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-800">
+            <Activity className="h-5 w-5 text-white" />
+          </div>
+          <span className="text-xl font-bold text-foreground">
+            AI Healthcare
+          </span>
+        </Link>
+
+        {/* Desktop Menu */}
+        <nav className="hidden items-center gap-2 md:flex">
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                location.pathname === item.path
+                  ? "bg-teal-800 text-white"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
+
+          {!token ? (
+            <>
+              <Link
+                to="/login"
+                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+              >
+                Login
+              </Link>
+              <Link
+                to="/register"
+                className="rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+              >
+                Get Started
+              </Link>
+            </>
+          ) : (
+            <button
+              onClick={logout}
+              className="rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+            >
+              Logout
+            </button>
+          )}
+        </nav>
+
+        {/* Mobile Button */}
+        <button
+          className="md:hidden p-2"
+          onClick={() => setMobileOpen(!mobileOpen)}
+        >
+          {mobileOpen ? (
+            <X className="h-5 w-5" />
+          ) : (
+            <Menu className="h-5 w-5" />
+          )}
+        </button>
+      </div>
+
+      {/* Mobile Menu */}
+      {mobileOpen && (
+        <nav className="border-t border-border bg-card px-4 py-4 md:hidden space-y-2">
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={() => setMobileOpen(false)}
+              className={`block rounded-lg px-4 py-2 text-sm font-medium ${
+                location.pathname === item.path
+                  ? "bg-primary text-white"
+                  : "text-muted-foreground hover:bg-accent"
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
+
+          {!token ? (
+            <>
+              <Link
+                to="/login"
+                onClick={() => setMobileOpen(false)}
+                className="block px-4 py-2 text-sm"
+              >
+                Login
+              </Link>
+              <Link
+                to="/register"
+                onClick={() => setMobileOpen(false)}
+                className="block rounded-lg bg-primary px-4 py-2 text-sm text-white"
+              >
+                Get Started
+              </Link>
+            </>
+          ) : (
+            <button
+              onClick={() => {
+                logout();
+                setMobileOpen(false);
+              }}
+              className="block w-full rounded-lg bg-primary px-4 py-2 text-sm text-white"
+            >
+              Logout
+            </button>
+          )}
+        </nav>
+      )}
+    </header>
+  );
+};
+
+export default Navbar;
