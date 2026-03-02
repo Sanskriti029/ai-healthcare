@@ -45,7 +45,7 @@ function Register() {
           }
         />
 
-        <button type="submit"  className="bg-teal-700 text-white py-2 rounded-md hover:bg-teal-800 transition">Register</button>
+        <button type="submit"  className="bg-teal-700 text-white py-2 rounded-md hover:bg-teal-800 transition hover:cursor-pointer">Register</button>
       </form>
     </div>
   );
