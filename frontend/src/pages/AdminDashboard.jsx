@@ -7,10 +7,9 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  ResponsiveContainer
+  ResponsiveContainer,
 } from "recharts";
-
-
+import { Pointer } from "lucide-react";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({});
@@ -18,67 +17,79 @@ const AdminDashboard = () => {
   const [doctors, setDoctors] = useState([]);
   const [analytics, setAnalytics] = useState([]);
 
-
-const fetchDashboard = async () => {
-  const patientsRes = await axios.get("http://localhost:5000/api/patients");
-  const appointRes = await axios.get("http://localhost:5000/api/appointments");
-  const doctorRes = await axios.get("http://localhost:5000/api/doctors");
-
-  setStats({
-    total_patients: patientsRes.data.length,
-    waiting: 0,
-    in_consultation: 0,
-    emergency: patientsRes.data.filter(p => p.severity === "High").length
-  });
-
-  setAppointments(appointRes.data);
-  setDoctors(doctorRes.data);
-
-  setAnalytics([
-    { date: "Today", count: appointRes.data.length }
-  ]);
-};
-
-
-const updateStatus = async (id) => {
-  const token = localStorage.getItem("token");
-
-  try {
-    await axios.put(
-      `http://localhost:5000/api/appointments/${id}`,
-      { status: "Completed" },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
+  const fetchDashboard = async () => {
+    const patientsRes = await axios.get("http://localhost:5000/api/patients");
+    const appointRes = await axios.get(
+      "http://localhost:5000/api/appointments",
     );
+    const doctorRes = await axios.get("http://localhost:5000/api/doctors");
 
-    fetchDashboard(); // refresh dashboard after update
-  } catch (error) {
-    console.error("Update failed:", error.response?.data || error.message);
-  }
-};
+    setStats({
+      total_patients: patientsRes.data.length,
+      waiting: 0,
+      in_consultation: 0,
+      emergency: patientsRes.data.filter((p) => p.severity === "High").length,
+    });
 
+    setAppointments(appointRes.data);
+    setDoctors(doctorRes.data);
 
+    setAnalytics([{ date: "Today", count: appointRes.data.length }]);
+  };
+
+  const updateStatus = async (id) => {
+    const token = localStorage.getItem("token");
+
+    try {
+      await axios.put(
+        `http://localhost:5000/api/appointments/${id}`,
+        { status: "Completed" },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      fetchDashboard(); // refresh dashboard after update
+    } catch (error) {
+      console.error("Update failed:", error.response?.data || error.message);
+    }
+  };
+
+  const deleteAppointment = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this appointment?",
+    );
+    if (!confirmDelete) return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/appointments/${id}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (response.ok) {
+        setAppointments(appointments.filter((app) => app.id !== id));
+      }
+    } catch (error) {
+      console.error("Error deleting appointment:", error);
+    }
+  };
 
   useEffect(() => {
     fetchDashboard();
-
-    
   }, []);
-
-
-
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-
       {/* Top Stats */}
       <div className="grid grid-cols-4 gap-6 mb-6">
         <StatCard title="Total Patients" value={stats.total_patients} />
-        <StatCard title="Waiting" value={stats.waiting} />
-        <StatCard title="In Consultation" value={stats.in_consultation} />
+        {/* <StatCard title="Waiting" value={stats.waiting} /> */}
+        {/* <StatCard title="In Consultation" value={stats.in_consultation} /> */}
         <StatCard title="Emergency" value={stats.emergency} />
       </div>
 
@@ -101,23 +112,32 @@ const updateStatus = async (id) => {
                 <td>{a.patient_name}</td>
                 <td>{a.doctor_name}</td>
                 <td>
-                  <span className={`px-2 py-1 rounded-full text-white ${
-                    a.priority === "High"
-                      ? "bg-red-500"
-                      : a.priority === "Medium"
-                      ? "bg-yellow-500"
-                      : "bg-green-500"
-                  }`}>
+                  <span
+                    className={`px-2 py-1 rounded-full text-white ${
+                      a.priority === "High"
+                        ? "bg-red-500"
+                        : a.priority === "Medium"
+                          ? "bg-yellow-500"
+                          : "bg-green-500"
+                    }`}
+                  >
                     {a.priority}
                   </span>
                 </td>
                 <td>{a.status}</td>
                 <td>
+                  <button onClick={() => updateStatus(a.id)}>Complete</button>
+
                   <button
-                    className="bg-blue-500 text-white px-3 py-1 rounded"
-                    onClick={() => updateStatus(a.id)}
+                    onClick={() => deleteAppointment(a.id)}
+                    style={{
+                      marginLeft: "10px",
+                      backgroundColor: "red",
+                      color: "white",
+                    
+                    }}
                   >
-                    Complete
+                    Delete
                   </button>
                 </td>
               </tr>
@@ -130,12 +150,12 @@ const updateStatus = async (id) => {
       <div className="grid grid-cols-2 gap-6 mb-6">
         <div className="bg-white p-6 rounded-xl shadow">
           <h2 className="text-xl font-bold mb-4">Doctors by Department</h2>
-          {doctors.map((d, index) => (
+          {/* {doctors.map((d, index) => (
             <div key={index} className="flex justify-between border-b py-2">
               <span>{d.department}</span>
               <span>{d.count}</span>
             </div>
-          ))}
+          ))} */}
         </div>
 
         {/* Analytics */}
@@ -151,8 +171,7 @@ const updateStatus = async (id) => {
           </ResponsiveContainer>
         </div>
       </div>
-
-    </div>
+     </div>
   );
 };
 

@@ -21,6 +21,9 @@ const Navbar = () => {
           { label: "Symptom Analyzer", path: "/triage" },
           { label: "Appointment", path: "/appointment" },
           { label: "Dashboard", path: "/dashboard" },
+          {label:"Doctor",path: "/doctors"},
+          {label:"Pharmacy",path: "/pharmacies"},
+          {label:"Hospital",path: "/hospitals"},
         ]
       : []),
   ];
@@ -28,7 +31,6 @@ const Navbar = () => {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-md">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-800">
@@ -78,6 +80,8 @@ const Navbar = () => {
               Logout
             </button>
           )}
+          
+          
         </nav>
 
         {/* Mobile Button */}
@@ -139,6 +143,8 @@ const Navbar = () => {
               Logout
             </button>
           )}
+
+          
         </nav>
       )}
     </header>
