@@ -338,6 +338,34 @@ class Appointment(db.Model):
     status = db.Column(db.String(50), default="Pending")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+
+class Hospital(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    address = db.Column(db.String(300))
+    city = db.Column(db.String(100))
+    phone = db.Column(db.String(20))
+
+
+class Doctor(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    specialization = db.Column(db.String(200))
+    experience = db.Column(db.Integer)  # years
+    hospital_id = db.Column(db.Integer, db.ForeignKey('hospital.id'))
+    city = db.Column(db.String(100))
+    phone = db.Column(db.String(20))
+
+
+class Pharmacy(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    address = db.Column(db.String(300))
+    city = db.Column(db.String(100))
+    phone = db.Column(db.String(20))
+    open_24hrs = db.Column(db.Boolean, default=False)
+
+
 # -----------------------
 # PUBLIC AI ROUTE
 # -----------------------
@@ -472,6 +500,61 @@ def delete_appointment(id):
 
     return jsonify({"message": "Appointment deleted successfully"})
 
+
+
+
+# -----------------------
+# databases  ROUTES
+# -----------------------
+
+@app.route("/api/doctors/<city>")
+def get_doctors_by_city(city):
+    doctors = Doctor.query.filter(Doctor.city.ilike(city)).all()
+
+    result = []
+    for d in doctors:
+        hospital = Hospital.query.get(d.hospital_id)
+        result.append({
+            "id": d.id,
+            "name": d.name,
+            "specialization": d.specialization,
+            "experience": d.experience,
+            "hospital": hospital.name if hospital else "",
+            "phone": d.phone
+        })
+
+    return jsonify(result)
+
+
+@app.route("/api/pharmacies/<city>", methods=["GET"])
+def get_pharmacies_by_city(city):
+    pharmacies = Pharmacy.query.filter(Pharmacy.city.ilike(city)).all()
+
+    return jsonify([
+        {
+            "id": p.id,
+            "name": p.name,
+            "phone": p.phone,
+            "open_24hrs": p.open_24hrs
+        }
+        for p in pharmacies
+    ])
+
+@app.route("/api/hospitals/<city>")
+def get_hospitals_by_city(city):
+    hospitals = Hospital.query.filter(
+        Hospital.city.ilike(city)
+    ).all()
+
+    return jsonify([
+        {
+            "id": h.id,
+            "name": h.name,
+            "address": h.address,
+            "phone": h.phone
+        }
+        for h in hospitals
+    ])
 # -----------------------
 # AUTH ROUTES
 # -----------------------
@@ -521,4 +604,42 @@ def triage():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
+
+            
+               # Add Bhopal hospitals
+        if Hospital.query.count() == 0:
+            h1 = Hospital(name="AIIMS Bhopal", address="Saket Nagar, Bhopal", city="Bhopal", phone="0755-2672333")
+            h2 = Hospital(name="Chirayu Hospital", address="Berasia Road, Bhopal", city="Bhopal", phone="0755-2737401")
+            h3 = Hospital(name="Bansal Hospital", address="Shahpura, Bhopal", city="Bhopal", phone="0755-4086000")
+
+            db.session.add_all([h1, h2, h3])
+            db.session.commit()
+
+        # Add Bhopal doctors
+        if Doctor.query.count() == 0:
+            doctors = [
+                Doctor(name="Dr. Amit Sharma", specialization="Cardiologist", experience=12, hospital_id=1, city="Bhopal", phone="9001111111"),
+                Doctor(name="Dr. Neha Verma", specialization="Neurologist", experience=8, hospital_id=2, city="Bhopal", phone="9002222222"),
+                Doctor(name="Dr. Rajesh Gupta", specialization="Orthopedic", experience=15, hospital_id=3, city="Bhopal", phone="9003333333"),
+                Doctor(name="Dr. Pooja Singh", specialization="Gynecologist", experience=10, hospital_id=1, city="Bhopal", phone="9004444444"),
+                Doctor(name="Dr. Ankit Jain", specialization="General Physician", experience=6, hospital_id=2, city="Bhopal", phone="9005555555")
+            ]
+
+            db.session.add_all(doctors)
+            db.session.commit()
+
+        # Add Bhopal pharmacies
+        if Pharmacy.query.count() == 0:
+            pharmacies = [
+                Pharmacy(name="Bhopal Medical Store", address="MP Nagar", city="Bhopal", phone="9100000001", open_24hrs=True),
+                Pharmacy(name="LifeCare Pharmacy", address="Arera Colony", city="Bhopal", phone="9100000002", open_24hrs=False),
+                Pharmacy(name="City Medicos", address="New Market", city="Bhopal", phone="9100000003", open_24hrs=True),
+                Pharmacy(name="HealthPlus Pharmacy", address="Kolar Road", city="Bhopal", phone="9100000004", open_24hrs=False)
+            ]
+
+            db.session.add_all(pharmacies)
+            db.session.commit()
+
+           
+
     app.run(debug=True, port=5000)
