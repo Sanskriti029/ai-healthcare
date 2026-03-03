@@ -1,15 +1,24 @@
 # backend/app.py
 
 from flask import Flask, request, jsonify
+import flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
+from flask_socketio import SocketIO
+# socketio = SocketIO(app, cors_allowed_origins="*")
+from datetime import datetime
+
+
+
+
 
 # -----------------------
+
 # APP CONFIG
 # -----------------------
-app = Flask(__name__)
+app = flask.Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///healthcare.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = "super-secret-key-change-this"
@@ -320,10 +329,14 @@ class Triage(db.Model):
 
 class Appointment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer)
+    user_id = db.Column(db.Integer, nullable=False)
+    patient_name = db.Column(db.String(100), nullable=False)
+    doctor_name = db.Column(db.String(100))
     department = db.Column(db.String(100))
+    priority = db.Column(db.String(50))
     date = db.Column(db.String(50))
     status = db.Column(db.String(50), default="Pending")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 # -----------------------
 # PUBLIC AI ROUTE
@@ -332,35 +345,156 @@ class Appointment(db.Model):
 def analyze():
     data = request.get_json()
     symptoms = data.get("symptoms", "")
+
     if not symptoms or len(symptoms.strip()) < 3:
         return jsonify({"error": "Please describe your symptoms"}), 400
 
     result = analyze_symptoms_ai(symptoms)
+
+    # Save to database
+    record = Triage(
+        user_id=1,  # temporary user
+        symptoms=symptoms,
+        severity=result["severity"]
+    )
+
+    db.session.add(record)
+    db.session.commit()
+
     return jsonify(result)
+
+
+@app.route("/api/dashboard/stats")
+def dashboard_stats():
+    total_triage = Triage.query.count()
+    total_appointments = Appointment.query.count()
+    pending = Appointment.query.filter_by(status="Pending").count()
+    completed = Appointment.query.filter_by(status="Completed").count()
+    emergency = Triage.query.filter_by(severity="Emergency").count()
+
+    return jsonify({
+        "total_patients": total_triage,
+        "total_appointments": total_appointments,
+        "waiting": pending,
+        "completed": completed,
+        "emergency": emergency
+    })
+    
+
+@app.route("/api/patients")
+def get_patients():
+    records = Triage.query.all()
+    return jsonify([
+        {
+            "id": r.id,
+            "symptoms": r.symptoms,
+            "severity": r.severity
+        }
+        for r in records
+    ])
+
+@app.route("/api/doctors")
+def get_doctors():
+    return flask.jsonify([
+        {"id": 1, "name": "Dr. Sharma", "department": "Cardiology"},
+        {"id": 2, "name": "Dr. Mehta", "department": "Neurology"},
+        {"id": 3, "name": "Dr. Rao", "department": "General"}
+    ])
+
+
+@app.route("/api/appointments", methods=["POST"])
+# @jwt_required()
+def create_appointment():
+    # user_id = get_jwt_identity()
+    user_id = 1  # temporary dummy user
+    data = flask.request.json
+
+    appointment = Appointment(
+        user_id=user_id,
+        patient_name=data["patient_name"],
+        doctor_name=data["doctor_name"],
+        department=data["department"],
+        priority=data["priority"],
+        date=data["date"],
+        status="Pending"
+    )
+
+    db.session.add(appointment)
+    db.session.commit()
+
+    return flask.jsonify({"message": "Appointment created"})
+
+
+
+
+@app.route("/api/appointments", methods=["GET"])
+def get_appointments():
+    appointments = Appointment.query.all()
+
+    return flask.jsonify([
+        {
+            "id": a.id,
+            "patient_name": a.patient_name,
+            "doctor_name": a.doctor_name,
+            "priority": a.priority,
+            "status": a.status,
+            "date": a.date
+        }
+        for a in appointments
+    ])
+
+@app.route("/api/appointments/<int:id>", methods=["PUT"])
+# @jwt_required()
+def update_appointment(id):
+    data = request.get_json()
+    status = data.get("status")
+
+    appointment = Appointment.query.get(id)
+
+    if not appointment:
+        return jsonify({"error": "Appointment not found"}), 404
+
+    appointment.status = status
+    db.session.commit()
+
+    return jsonify({"message": "Appointment updated successfully"})
+
+# delete appointmnet
+@app.route("/api/appointments/<int:id>", methods=["DELETE"])
+def delete_appointment(id):
+    appointment = Appointment.query.get(id)
+
+    if not appointment:
+        return jsonify({"error": "Appointment not found"}), 404
+
+    db.session.delete(appointment)
+    db.session.commit()
+
+    return jsonify({"message": "Appointment deleted successfully"})
 
 # -----------------------
 # AUTH ROUTES
 # -----------------------
 @app.route("/register", methods=["POST"])
 def register():
-    data = request.json
+    data = flask.request.json
     if User.query.filter_by(email=data["email"]).first():
-        return jsonify({"message": "Email already exists"}), 400
+        return flask.jsonify({"message": "Email already exists"}), 400
 
     hashed = bcrypt.generate_password_hash(data["password"]).decode("utf-8")
     user = User(name=data["name"], email=data["email"], password=hashed)
     db.session.add(user)
     db.session.commit()
-    return jsonify({"message": "User registered successfully"})
+    return flask.jsonify({"message": "User registered successfully"})
 
 @app.route("/login", methods=["POST"])
 def login():
-    data = request.json
+    data = flask.request.json
     user = User.query.filter_by(email=data["email"]).first()
     if user and bcrypt.check_password_hash(user.password, data["password"]):
         token = create_access_token(identity=user.id)
-        return jsonify({"token": token})
-    return jsonify({"message": "Invalid credentials"}), 401
+        return flask.jsonify({"token": token})
+    return flask.jsonify({"message": "Invalid credentials"}), 401
 
 # -----------------------
 # PROTECTED TRIAGE ROUTE
@@ -369,7 +503,7 @@ def login():
 @jwt_required()
 def triage():
     user_id = get_jwt_identity()
-    data = request.json
+    data = flask.request.json
     symptoms = data.get("symptoms", "")
 
     ai_result = analyze_symptoms_ai(symptoms)
@@ -379,7 +513,7 @@ def triage():
     db.session.add(record)
     db.session.commit()
 
-    return jsonify(ai_result)
+    return flask.jsonify(ai_result)
 
 # -----------------------
 # RUN APP
