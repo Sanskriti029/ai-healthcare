@@ -181,5 +181,6 @@ const StatCard = ({ title, value }) => (
     <p className="text-3xl font-bold">{value || 0}</p>
   </div>
 );
-
+  
 export default AdminDashboard;
+
