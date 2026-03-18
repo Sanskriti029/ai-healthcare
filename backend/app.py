@@ -464,6 +464,7 @@ def get_appointments():
             "id": a.id,
             "patient_name": a.patient_name,
             "doctor_name": a.doctor_name,
+            "department": a.department,
             "priority": a.priority,
             "status": a.status,
             "date": a.date
@@ -579,6 +580,30 @@ def login():
         return flask.jsonify({"token": token})
     return flask.jsonify({"message": "Invalid credentials"}), 401
 
+
+@app.route("/resetpassword", methods=["POST"])
+def reset_password():
+    data = request.get_json()
+
+    email = data.get("email")
+    new_password = data.get("newPassword")
+
+    if not email or not new_password:
+        return jsonify({"msg": "Missing data"}), 400
+
+    # 🔍 Find user
+    user = User.query.filter_by(email=email).first()
+
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    # 🔐 Hash password using bcrypt
+    hashed_password = bcrypt.generate_password_hash(new_password).decode("utf-8")
+
+    user.password = hashed_password
+    db.session.commit()
+
+    return jsonify({"msg": "Password reset successful ✅"})
 # -----------------------
 # PROTECTED TRIAGE ROUTE
 # -----------------------
@@ -608,11 +633,15 @@ if __name__ == "__main__":
             
                # Add Bhopal hospitals
         if Hospital.query.count() == 0:
-            h1 = Hospital(name="AIIMS Bhopal", address="Saket Nagar, Bhopal", city="Bhopal", phone="0755-2672333")
-            h2 = Hospital(name="Chirayu Hospital", address="Berasia Road, Bhopal", city="Bhopal", phone="0755-2737401")
-            h3 = Hospital(name="Bansal Hospital", address="Shahpura, Bhopal", city="Bhopal", phone="0755-4086000")
-
-            db.session.add_all([h1, h2, h3])
+            hospitals = [
+                Hospital(name="AIIMS Bhopal", address="Saket Nagar, Bhopal", city="Bhopal", phone="0755-2672333"),
+                Hospital(name="Chirayu Hospital", address="Berasia Road, Bhopal", city="Bhopal", phone="0755-2737401"),
+                Hospital(name="Bansal Hospital", address="Shahpura, Bhopal", city="Bhopal", phone="0755-4086000"),
+                Hospital(name="Community Health Centre (chc) Gandhi Nagar", address="Nai Basti Road, Pratap Ward, Gandhi Nagar,Bhopal", city="Bhopal", phone="0755-4086000"),
+                Hospital(name="Sanjeevani Hospital", address="77, Op. Motia Talab , Tajul Masajid Road,Bhopal", city="Bhopal", phone="0755-4086000"),
+                Hospital(name=" ApolloSAGE Hospital", address="Bawadiya Kalan, Salaiya, Bhopal, Madhya Pradesh 462026", city="Bhopal", phone="07723016773")
+            ]
+            db.session.add_all(hospitals)
             db.session.commit()
 
         # Add Bhopal doctors
