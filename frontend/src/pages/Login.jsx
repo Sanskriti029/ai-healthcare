@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,Link } from "react-router-dom";
+import ForgetPassword from "./ForgotPassword";
 import API from "../api";
 
 function Login() {
@@ -12,6 +13,14 @@ function Login() {
     localStorage.setItem("token", res.data.token);
     navigate("/dashboard");
   };
+
+   const button = async (e) => {
+    e.preventDefault();
+    const res = await API.post("/forgetpassword", form);
+    localStorage.setItem("token", res.data.token);
+    navigate("/forgetpassword");
+  };
+
 
   return (
     <div className="h-screen flex justify-center items-center bg-[#f4f7f9]">
@@ -47,6 +56,14 @@ function Login() {
         >
           Login
         </button>
+        
+        
+         <Link
+          to="/forgot-password"
+          className="text-center text-sm text-teal-700 hover:underline"
+        >
+          Forgot Password?
+        </Link>
       </form>
     </div>
   );

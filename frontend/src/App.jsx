@@ -4,6 +4,7 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
 // import Dashboard from "./pages/Dashboard";
 import Triage from "./pages/Triage";
 import Appointment from "./pages/Appointment";
@@ -23,6 +24,7 @@ function App() {
   <Route path="/" element={<Home />} />
   <Route path="/login" element={<Login />} />
   <Route path="/register" element={<Register />} />
+  <Route path="/forgot-password" element={<ForgotPassword />} />
 
   <Route element={<ProtectedRoute />}>
     <Route path="/dashboard" element={<AdminDashboard />} />

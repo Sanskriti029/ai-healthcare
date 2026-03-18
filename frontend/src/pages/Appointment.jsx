@@ -4,7 +4,7 @@ function Appointment() {
   const [patientName, setPatientName] = useState("");
   const [doctorName, setDoctorName] = useState("");
   const [department, setDepartment] = useState("");
-  const [priority, setPriority] = useState("Medium");
+  const [priority, setPriority] = useState("");
   const [date, setDate] = useState("");
 
   const handleSubmit = async () => {
@@ -31,7 +31,7 @@ function Appointment() {
     setPatientName("");
     setDoctorName("");
     setDepartment("");
-    setPriority("Medium");
+    setPriority("");
     setDate("");
   };
 
@@ -58,19 +58,35 @@ function Appointment() {
           className="border p-2 rounded-md"
         />
 
-        <input
+        {/* <input
           type="text"
           placeholder="Department"
           value={department}
           onChange={(e) => setDepartment(e.target.value)}
           className="border p-2 rounded-md"
-        />
+        /> */}
+        <select
+          value={department}
+          onChange={(e) => setDepartment(e.target.value)}
+          className="border p-2 rounded-md"
+        >
+          <option value="">Select Department --</option>
+          <option value="Cardiology">Cardiology</option>
+          <option value="Dentistry">Dentistry</option>
+          <option value="Physician">Physician</option>
+          <option value="Dermatology">Dermatology</option>
+          <option value="Surgery">Surgery</option>
+          <option value="Neurology">Neurology</option>
+          <option value="Others">Others</option>
+        </select>
 
         <select
+          placeholder="Select priority"
           value={priority}
           onChange={(e) => setPriority(e.target.value)}
           className="border p-2 rounded-md"
         >
+          <option value="Select Priority">Select priority --</option>
           <option value="Low">Low</option>
           <option value="Medium">Medium</option>
           <option value="High">High</option>

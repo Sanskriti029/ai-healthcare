@@ -102,6 +102,7 @@ const AdminDashboard = () => {
               <th>Patient</th>
               <th>Doctor</th>
               <th>Priority</th>
+              <th>Department</th>
               <th>Status</th>
               <th>Action</th>
             </tr>
@@ -111,6 +112,7 @@ const AdminDashboard = () => {
               <tr key={a.id} className="border-b">
                 <td>{a.patient_name}</td>
                 <td>{a.doctor_name}</td>
+
                 <td>
                   <span
                     className={`px-2 py-1 rounded-full text-white ${
@@ -124,18 +126,20 @@ const AdminDashboard = () => {
                     {a.priority}
                   </span>
                 </td>
+                <td>{a.department}</td>
                 <td>{a.status}</td>
                 <td>
-                  <button onClick={() => updateStatus(a.id)}>Complete</button>
-
+                  <button
+                    onClick={() => updateStatus(a.id)}
+                    className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 hover:cursor-pointer transition"
+                  >
+                    Complete
+                  </button>
+                </td>
+                <td>
                   <button
                     onClick={() => deleteAppointment(a.id)}
-                    style={{
-                      marginLeft: "10px",
-                      backgroundColor: "red",
-                      color: "white",
-                    
-                    }}
+                    className="ml-3 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 hover:cursor-pointer transition"
                   >
                     Delete
                   </button>
@@ -171,7 +175,7 @@ const AdminDashboard = () => {
           </ResponsiveContainer>
         </div>
       </div>
-     </div>
+    </div>
   );
 };
 
@@ -181,6 +185,5 @@ const StatCard = ({ title, value }) => (
     <p className="text-3xl font-bold">{value || 0}</p>
   </div>
 );
-  
-export default AdminDashboard;
 
+export default AdminDashboard;

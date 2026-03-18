@@ -1,18 +1,25 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,Link } from "react-router-dom";
 import API from "../api";
+
 
 function Register() {
   const [form, setForm] = useState({});
   const navigate = useNavigate();
 
-  const submit = async (e) => {
+   const submit = async (e) => {
     e.preventDefault();
 
-    await API.post("/register", form);
+    try {
+      await API.post("/register", form);
 
-    alert("Registered successfully");
-    navigate("/login");
+      alert("Registered successfully ✅");
+
+      // 🔥 Go to login page after register
+      navigate("/login");
+    } catch (err) {
+      alert(err.response?.data?.message || "Registration failed");
+    }
   };
 
   return (
@@ -46,7 +53,14 @@ function Register() {
         />
 
         <button type="submit"  className="bg-teal-700 text-white py-2 rounded-md hover:bg-teal-800 transition hover:cursor-pointer">Register</button>
+        <Link
+  to="/login"
+  className="text-center text-sm text-teal-700 hover:text-teal-900 hover:underline transition duration-300"
+>
+  Already have an account? Login
+</Link>
       </form>
+       
     </div>
   );
 }
