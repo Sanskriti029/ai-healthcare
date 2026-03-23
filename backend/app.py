@@ -536,6 +536,7 @@ def get_pharmacies_by_city(city):
             "id": p.id,
             "name": p.name,
             "phone": p.phone,
+            "address": p.address,
             "open_24hrs": p.open_24hrs
         }
         for p in pharmacies
