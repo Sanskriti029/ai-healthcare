@@ -23,7 +23,7 @@ function PharmacySearch() {
     <div className="p-8 bg-gray-100 min-h-screen">
       <h2 className="text-3xl font-bold mb-6">
         Find Pharmacies Near You
-      </h2>
+      </h2> 
 
       <div className="flex gap-3 mb-8">
         <input
@@ -42,8 +42,13 @@ function PharmacySearch() {
       </div>
 
       {loading && <p>Loading...</p>}
-
+        {!loading && pharmacies.length === 0 && city && (
+        <p className="text-gray-600">
+          No pharmacies found for this city.
+        </p>
+      )}
       <div className="grid md:grid-cols-3 gap-6">
+        
         {pharmacies.map((p) => (
           <div
             key={p.id}

@@ -16,14 +16,15 @@ const Navbar = () => {
 
   const navItems = [
     { label: "Home", path: "/" },
+
     ...(token
       ? [
           { label: "Symptom Analyzer", path: "/triage" },
           { label: "Appointment", path: "/appointment" },
           { label: "Dashboard", path: "/dashboard" },
-          {label:"Doctor",path: "/doctors"},
-          {label:"Pharmacy",path: "/pharmacies"},
-          {label:"Hospital",path: "/hospitals"},
+          { label: "Doctor", path: "/doctors" },
+          { label: "Pharmacy", path: "/pharmacies" },
+          { label: "Hospital", path: "/hospitals" },
         ]
       : []),
   ];
@@ -47,7 +48,7 @@ const Navbar = () => {
             <Link
               key={item.path}
               to={item.path}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors  hover:bg-teal-800 hover:text-white  ${
                 location.pathname === item.path
                   ? "bg-teal-800 text-white"
                   : "text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -61,7 +62,7 @@ const Navbar = () => {
             <>
               <Link
                 to="/login"
-                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+                className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-teal-800 hover:text-white"
               >
                 Login
               </Link>
@@ -75,13 +76,11 @@ const Navbar = () => {
           ) : (
             <button
               onClick={logout}
-              className="rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+              className="rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white hover:opacity-90 "
             >
               Logout
             </button>
           )}
-          
-          
         </nav>
 
         {/* Mobile Button */}
@@ -143,8 +142,6 @@ const Navbar = () => {
               Logout
             </button>
           )}
-
-          
         </nav>
       )}
     </header>

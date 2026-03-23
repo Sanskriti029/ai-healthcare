@@ -3,13 +3,16 @@ import React, { useState } from "react";
 function DoctorSearch() {
   const [city, setCity] = useState("");
   const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const searchDoctors = async () => {
     if (!city) return alert("Enter city name");
+    setLoading(true);
 
     const res = await fetch(`http://localhost:5000/api/doctors/${city}`);
     const data = await res.json();
     setDoctors(data);
+    setLoading(false);
   };
 
   return (
@@ -19,22 +22,27 @@ function DoctorSearch() {
       <div className="flex gap-2 mb-6">
         <input
           type="text"
-          placeholder="Enter city (e.g. Indore)"
+          placeholder="Enter city (e.g. Bhopal)"
           value={city}
           onChange={(e) => setCity(e.target.value)}
           className="border p-2 rounded-md"
         />
         <button
           onClick={searchDoctors}
+          disabled={loading}
           className="bg-blue-600 text-white px-4 py-2 rounded-md"
         >
           Search
         </button>
       </div>
 
-      <div className="grid gap-4">
-        {doctors.length === 0 && <p>No doctors found.</p>}
+      {loading && <p>Loading doctors...</p>}
 
+      {!loading && doctors.length === 0 && city && (
+        <p className="text-gray-600">No doctors found for this city.</p>
+      )}
+
+      <div className="grid gap-4">
         {doctors.map((doc) => (
           <div key={doc.id} className="border p-4 rounded-md shadow">
             <h3 className="text-lg font-semibold">{doc.name}</h3>
