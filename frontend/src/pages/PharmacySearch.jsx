@@ -20,7 +20,7 @@ function PharmacySearch() {
   };
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen">
+    <div className="p-8 bg-gray-100 min-h-screen text-gray-800">
       <h2 className="text-3xl font-bold mb-6">
         Find Pharmacies Near You
       </h2> 
@@ -41,12 +41,12 @@ function PharmacySearch() {
         </button>
       </div>
 
-      {loading && <p>Loading...</p>}
+      {/* {loading && <p>Loading...</p>}
         {!loading && pharmacies.length === 0 && city && (
         <p className="text-gray-600">
           No pharmacies found for this city.
         </p>
-      )}
+      )} */}
       <div className="grid md:grid-cols-3 gap-6">
         
         {pharmacies.map((p) => (

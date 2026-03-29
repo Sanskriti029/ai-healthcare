@@ -16,10 +16,10 @@ function DoctorSearch() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-white text-gray-800">
       <h2 className="text-2xl font-bold mb-4">Find Doctors Near You</h2>
 
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-6 ">
         <input
           type="text"
           placeholder="Enter city (e.g. Bhopal)"

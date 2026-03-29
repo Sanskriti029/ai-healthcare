@@ -23,7 +23,7 @@ function Register() {
   };
 
   return (
-    <div className="h-screen flex justify-center items-center bg-[#f4f7f9]">
+    <div className="h-screen flex justify-center items-center bg-[#f4f7f9] text-gray-800">
       <form className="bg-white p-10 w-[350px] rounded-xl flex flex-col gap-4 shadow-lg" onSubmit={submit}>
         <h2 className="text-2xl font-semibold text-center text-gray-800">Create Account</h2>
 

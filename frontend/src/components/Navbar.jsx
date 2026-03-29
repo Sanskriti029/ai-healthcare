@@ -22,15 +22,20 @@ const Navbar = () => {
           { label: "Symptom Analyzer", path: "/triage" },
           { label: "Appointment", path: "/appointment" },
           { label: "Dashboard", path: "/dashboard" },
-          { label: "Doctor", path: "/doctors" },
-          { label: "Pharmacy", path: "/pharmacies" },
-          { label: "Hospital", path: "/hospitals" },
+          // { label: "Healthcare Dashboard", path: "/healthcare-dashboard" },
+
+          // { label: "Doctor", path: "/doctors" },
+          // { label: "Pharmacy", path: "/pharmacies" },
+          // { label: "Hospital", path: "/hospitals" },
+          // { label: "Admin", path: "/admin" },
+
+          { label: "User Dashboard", path: "/user-dashboard" }
         ]
       : []),
   ];
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-md">
+<header className="sticky top-0 z-50 w-full bg-black border-b border-gray-800 shadow-md">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
@@ -48,11 +53,11 @@ const Navbar = () => {
             <Link
               key={item.path}
               to={item.path}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors  hover:bg-teal-800 hover:text-white  ${
-                location.pathname === item.path
-                  ? "bg-teal-800 text-white"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
-              }`}
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:bg-teal-800 hover:text-white ${
+  location.pathname === item.path
+    ? "bg-teal-800 text-white"
+    : "text-gray-300 hover:bg-gray-800 hover:text-white"
+}`}
             >
               {item.label}
             </Link>
@@ -62,13 +67,13 @@ const Navbar = () => {
             <>
               <Link
                 to="/login"
-                className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-teal-800 hover:text-white"
+                className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-teal-800 hover:text-gray"
               >
                 Login
               </Link>
               <Link
                 to="/register"
-                className="rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+                className="rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-gray hover:opacity-90"
               >
                 Get Started
               </Link>
@@ -98,7 +103,7 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       {mobileOpen && (
-        <nav className="border-t border-border bg-card px-4 py-4 md:hidden space-y-2">
+        <nav className="border-t border-border bg-black border-gray-8000  px-4 py-4 md:hidden space-y-2">
           {navItems.map((item) => (
             <Link
               key={item.path}

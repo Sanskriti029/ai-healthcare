@@ -1,45 +1,4 @@
-// import { useState } from "react";
-// import { useNavigate } from "react-router-dom";
-// import API from "../api";
 
-// function ForgotPassword() {
-//   const [form, setForm] = useState({});
-//   const navigate = useNavigate();
-
-//    const forgerpassword = async (e) => {
-//     e.preventDefault();
-//     const res = await API.post("/forgetpassword", form);
-//     localStorage.setItem("token", res.data.token);
-//     navigate("/forgetpassword");
-//   };
-//   return (
-//     <form
-//       onSubmit={submit}
-//       className="bg-white p-10 w-87.5 rounded-xl flex flex-col gap-4 shadow-lg"
-//     > <div style={{
-//       height: "100vh",
-//       display: "flex",
-//       justifyContent: "center",
-//       alignItems: "center"
-//     }}>
-//         <div style={{
-//           background: "white",
-//           padding: "40px",
-//           borderRadius: "10px"
-//         }}>
-//           <h2>Reset Password</h2>
-//           <input placeholder="Enter Email" style={{ padding: "10px", width: "250px" }} />
-//           <br /><br />
-//           <button style={{ padding: "10px", background: "#007bff", color: "white" }}>
-//             Send Reset Link
-//           </button>
-//         </div>
-//       </div>
-//       </form>
-//   );
-// }
-
-// export default ForgotPassword;
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api";

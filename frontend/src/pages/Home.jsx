@@ -21,7 +21,7 @@ const Home = () => {
     <div style={{ minHeight: "100vh", fontFamily: "Arial" }}>
       
       {/* HERO SECTION */}
-      <section style={{ padding: "80px 20px", textAlign: "center", background: "#f5f7fa" }}>
+      <section style={{ padding: "80px 20px", textAlign: "center", background: "#f5f7fa", color:"black" }}>
         
         <h1 style={{ fontSize: "40px", fontWeight: "bold" }}>
           Your AI Health
@@ -125,6 +125,7 @@ export default Home;
 //         style={{
 //           padding: "80px 40px",
 //           background: "#f5f7fa",
+//           color:"black"
 //         }}
 //       >
 //         <div

@@ -11,15 +11,16 @@ import Appointment from "./pages/Appointment";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminDashboard from "./pages/AdminDashboard";
 import HospitalSearch from "./pages/HospitalSearch";
-
+import Admin from "./pages/Admin";
 import DoctorSearch from "./pages/DoctorSearch";
 import PharmacySearch from "./pages/PharmacySearch";
-
+import UserDashboard from "./pages/userdashboard";
+import "./index.css";
 function App() {
   return (
     <BrowserRouter>
       <Navbar />
-      
+
        <Routes>
   <Route path="/" element={<Home />} />
   <Route path="/login" element={<Login />} />
@@ -33,6 +34,8 @@ function App() {
     <Route path="/hospitals" element={<HospitalSearch />} />
     <Route path="/triage" element={<Triage />} />
     <Route path="/appointment" element={<Appointment />} />
+    {/* <Route path="/admin" element={<Admin/>}/> */}
+    <Route path="/user-dashboard" element={<UserDashboard />} />
   </Route>
 </Routes>
     

@@ -1,95 +1,65 @@
- @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
-@import "tailwindcss";
-/* @tailwind base;
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap');
+
+@tailwind base;
 @tailwind components;
-@tailwind utilities; */
+@tailwind utilities;
 
- body{
-  margin: 0;
-  font-family: "Segoe UI", sans-serif;
-  background: #f4f7f9;
+/* GLOBAL */
+body {
+  font-family: 'Inter', sans-serif;
+  background: #f8fafc;
 }
 
-/* NAVBAR */
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  padding: 15px 60px;
-  background: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+/* HEADINGS */
+h1,h2,h3 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
-.logo {
-  font-weight: bold;
-  font-size: 20px;
-  color: #0f3d3e;
+/* GLASS CARD */
+.glass-card {
+  @apply backdrop-blur-xl border rounded-2xl shadow-xl;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-color: rgba(255, 255, 255, 0.3);
 }
-
-.nav-links a {
-  margin-left: 20px;
-  text-decoration: none;
-  color: #333;
-}
-
-.btn-nav {
-  background: #0f7e7e;
+body {
+  font-family: 'Inter', sans-serif;
+  background: radial-gradient(circle at top, #0f172a, #020617);
   color: white;
-  padding: 8px 15px;
-  border-radius: 6px;
-  border: none;
+}
+.btn-primary {
+  @apply bg-gradient-to-r from-green-400 via-emerald-500 to-cyan-500
+  text-white font-semibold px-8 py-4 rounded-2xl
+  shadow-lg transition-all duration-300;
+}
+textarea {
+  @apply text-gray-900 placeholder-gray-500;
+}
+.btn-primary:hover {
+  @apply scale-110 shadow-[0_0_30px_rgba(16,185,129,0.6)];
 }
 
-/* HERO */
-.hero {
-  height: 100vh;
-  background: linear-gradient(135deg, #0f3d3e, #2c7a7b);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  text-align: center;
+/* BUTTON PRIMARY */
+.btn-primary {
+  @apply bg-gradient-to-r from-green-500 via-emerald-500 to-cyan-500 
+  text-white font-semibold px-10 py-4 rounded-2xl 
+  shadow-lg transition-all duration-300;
 }
 
-.hero-btn {
-  margin-top: 20px;
-  background: white;
-  color: #0f3d3e;
-  padding: 12px 25px;
-  border-radius: 8px;
-  text-decoration: none;
+.btn-primary:hover {
+  @apply scale-105 shadow-2xl;
 }
 
-/* AUTH */
-.auth-container {
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/* BUTTON SECONDARY */
+.btn-secondary {
+  @apply bg-white/20 backdrop-blur-md border border-white/30 
+  text-white font-semibold px-10 py-4 rounded-2xl transition-all;
 }
 
-.auth-card {
-  background: white;
-  padding: 40px;
-  width: 350px;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+.btn-secondary:hover {
+  @apply bg-white/30;
 }
 
-/* PAGES */
-.page {
-  padding: 60px;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-}
-
-.card {
-  background: white;
-  padding: 30px;
-  border-radius: 8px;
+/* CONTAINER */
+.page-container {
+  @apply max-w-7xl mx-auto px-6;
 }
