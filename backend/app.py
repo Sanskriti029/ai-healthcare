@@ -8,8 +8,9 @@ from flask_bcrypt import Bcrypt
 from flask_socketio import SocketIO
 # socketio = SocketIO(app, cors_allowed_origins="*")
 from datetime import datetime
-# from functools import wraps
-# from flask_jwt_extended import get_jwt
+from functools import wraps
+from flask_jwt_extended import get_jwt
+from streamlit import user
 
 
 
@@ -286,19 +287,19 @@ def analyze_symptoms_ai(symptoms):
 
 
 
-# def admin_required(fn):
-#     @wraps(fn)
-#     @jwt_required()
-#     def wrapper(*args, **kwargs):
-#         claims = get_jwt()
-#         role = claims.get("role")
+def admin_required(fn):
+    @wraps(fn)
+    @jwt_required()
+    def wrapper(*args, **kwargs):
+        claims = get_jwt()
+        role = claims.get("role")
 
-#         if role != "admin":
-#             return jsonify({"error": "Admin access required"}), 403
+        if role != "admin":
+            return jsonify({"error": "Admin access required"}), 403
 
-#         return fn(*args, **kwargs)
+        return fn(*args, **kwargs)
 
-#     return wrapper
+    return wrapper
 
 # -----------------------
 # DATABASE MODELS
@@ -308,7 +309,7 @@ class User(db.Model):
     name = db.Column(db.String(100))
     email = db.Column(db.String(120), unique=True)
     password = db.Column(db.String(200))
-    # role = db.Column(db.String(20), default="user")
+    role = db.Column(db.String(20), default="user")
     
 class Triage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -346,10 +347,6 @@ class DoctorAvailability(db.Model):
     status = db.Column(db.String(20))  # free / busy
 
 
-
-
-
-
 class Hospital(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
@@ -375,6 +372,7 @@ class Pharmacy(db.Model):
     city = db.Column(db.String(100))
     phone = db.Column(db.String(20))
     open_24hrs = db.Column(db.Boolean, default=False)
+    area = db.Column(db.String(100))  # New field for area/locality
 
 # -----------------------
 # PUBLIC AI ROUTE
@@ -391,6 +389,7 @@ def analyze():
 
     # Save to database
     record = Triage(
+        
         user_id=1,  # temporary user
         symptoms=symptoms,
         severity=result["severity"]
@@ -403,7 +402,7 @@ def analyze():
 
 
 @app.route("/api/dashboard/stats")
-# @admin_required
+@admin_required
 def dashboard_stats():
     total_triage = Triage.query.count()
     total_appointments = Appointment.query.count()
@@ -421,7 +420,7 @@ def dashboard_stats():
     
 
 @app.route("/api/patients")
-# @admin_required
+@admin_required
 def get_patients():
     records = Triage.query.all()
     return jsonify([
@@ -453,36 +452,30 @@ def get_doctors():
 from sqlalchemy.exc import IntegrityError
 
 @app.route("/api/appointments", methods=["POST"])
+@jwt_required()
 def create_appointment():
-    user_id = 1
+    user_id = get_jwt_identity()  # ✅ get logged-in user
+
     data = request.json
 
-    doctor_id = data["doctor_id"]
-    date = data["date"]
-    time_slot = data["time_slot"]
-
-    doctor = Doctor.query.get(doctor_id)
+    doctor = Doctor.query.get(data["doctor_id"])
 
     appointment = Appointment(
-        user_id=user_id,
+        user_id=user_id,  # ✅ dynamic user
         patient_name=data["patient_name"],
-        doctor_id=doctor_id,
+        doctor_id=data["doctor_id"],
         doctor_name=doctor.name,
         department=doctor.specialization,
-        date=date,
-        time_slot=time_slot,
+        date=data["date"],
+        time_slot=data["time_slot"],
         status="Pending",
         priority=data.get("priority", "Low")
     )
 
-    try:
-        db.session.add(appointment)
-        db.session.commit()
-    except IntegrityError:
-        db.session.rollback()
-        return jsonify({"error": "Slot already booked ❌"}), 400
+    db.session.add(appointment)
+    db.session.commit()
 
-    return jsonify({"message": "Appointment booked successfully"})
+    return jsonify({"message": "Appointment booked"})
 
 
 
@@ -490,7 +483,7 @@ def create_appointment():
 
     
 @app.route("/api/appointments/<int:id>", methods=["PUT"])
-# @jwt_required()
+@jwt_required()
 def update_appointment(id):
     data = request.get_json()
     status = data.get("status")
@@ -584,20 +577,11 @@ def get_appointments():
 
 #queue system 
 @app.route('/api/queue', methods=['GET'])
+@jwt_required()
 def get_queue():
+    user_id = get_jwt_identity()  # 🔥 real user now
 
-    # 🪑 Waiting Queue (priority-based)
-    waiting = Appointment.query.filter_by(status="Pending") \
-        .order_by(
-            db.case(
-                (Appointment.priority == "High", 1),
-                (Appointment.priority == "Medium", 2),
-                else_=3
-            ),
-            Appointment.id.asc()
-        ).all()
-
-    # 🩺 Consultation Queue (currently being treated)
+    waiting = Appointment.query.filter_by(status="Pending")
     consultation = Appointment.query.filter_by(status="In Consultation").all()
 
     return jsonify({
@@ -605,15 +589,14 @@ def get_queue():
             {
                 "id": a.id,
                 "patient": a.patient_name,
-                "department": a.department,
-                "priority": a.priority
+                "isMe": a.user_id == int(user_id)  # ✅ match logged-in user
             } for a in waiting
         ],
         "consultation": [
             {
                 "id": a.id,
                 "patient": a.patient_name,
-                "department": a.department
+                "isMe": a.user_id == int(user_id)
             } for a in consultation
         ]
     })
@@ -686,8 +669,6 @@ def get_doctors_by_city(city):
 
     return jsonify(result)
 
-
-
 @app.route("/api/pharmacies/<city>", methods=["GET"])
 def get_pharmacies_by_city(city):
     pharmacies = Pharmacy.query.filter(Pharmacy.city.ilike(city)).all()
@@ -698,7 +679,24 @@ def get_pharmacies_by_city(city):
             "name": p.name,
             "address": p.address,
             "phone": p.phone,
-            "open_24hrs": p.open_24hrs
+            "open_24hrs": p.open_24hrs,
+            "area": p.area
+        }
+        for p in pharmacies
+    ])
+
+@app.route("/api/pharmacies/<area>", methods=["GET"])
+def get_pharmacies_by_area(area):
+    pharmacies = Pharmacy.query.filter(Pharmacy.area.ilike(area)).all()
+
+    return jsonify([
+        {
+            "id": p.id,
+            "name": p.name,
+            "address": p.address,
+            "phone": p.phone,
+            "open_24hrs": p.open_24hrs,
+            "area": p.area
         }
         for p in pharmacies
     ])
@@ -750,15 +748,36 @@ def register():
     db.session.commit()
     return flask.jsonify({"message": "User registered successfully"})
 
+# @app.route("/login", methods=["POST"])
+# def login():
+#     data = flask.request.json
+#     user = User.query.filter_by(email=data["email"]).first()
+#     if user and bcrypt.check_password_hash(user.password, data["password"]):
+#         token = create_access_token(identity=user.id)
+#         return flask.jsonify({"token": token})
+#     return flask.jsonify({"message": "Invalid credentials"}), 401
+
 @app.route("/login", methods=["POST"])
 def login():
-    data = flask.request.json
-    user = User.query.filter_by(email=data["email"]).first()
-    if user and bcrypt.check_password_hash(user.password, data["password"]):
-        token = create_access_token(identity=user.id)
-        return flask.jsonify({"token": token})
-    return flask.jsonify({"message": "Invalid credentials"}), 401
+    data = request.json
 
+    user = User.query.filter_by(email=data["email"]).first()
+
+    if user and bcrypt.check_password_hash(user.password, data["password"]):
+        token = create_access_token(
+            identity=str(user.id),   # ✅ store user_id
+            additional_claims={
+                "role": user.role     # ✅ store role (admin/user)
+            }
+        )
+
+        return jsonify({
+            "token": token,
+            "user_id": user.id,
+            "role": user.role
+        })
+
+    return jsonify({"message": "Invalid credentials"}), 401
 
 
 @app.route("/resetpassword", methods=["POST"])
@@ -810,100 +829,32 @@ def triage():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
+
         from seed_data import seed_extra_data
         seed_extra_data(db, Hospital, Doctor, Pharmacy)
 
-            
-        #        # Add Bhopal hospitals
-        # if Hospital.query.count() == 0:
-        #     hospitals = [
-        #         Hospital(name="AIIMS Bhopal", address="SAIIMS Campus Rd, AIIMS Campus, Saket Nagar, Habib Ganj, Bhopal, Madhya Pradesh 462020", city="Bhopal", phone="07552982607"),
-        #         Hospital(name="Bansal Hospital", address="Chuna Bhatti Rd, Manisha Market, Sector C, Shahpura, Bhopal, Madhya Pradesh 462039", city="Bhopal", phone="07554086010"),
-        #         Hospital(name="Community Health Centre (chc) Gandhi Nagar", address="Nai Basti Road, Pratap Ward, Gandhi Nagar,Bhopal", city="Bhopal", phone="0755-4086000"),
-        #         Hospital(name="Sanjeevani Hospital", address="77, Op. Motia Talab , Tajul Masajid Road,Bhopal", city="Bhopal", phone="0755-4086000"),
-        #         Hospital(name="ApolloSAGE Hospital", address="Bawadiya Kalan, Salaiya, Bhopal, Madhya Pradesh 462026", city="Bhopal", phone="07723016773"),
-        #         Hospital(name="People's Hospital Bhopal", address="Ayodhya Bypass Rd, Peoples Campus, Bhanpur, Bhopal, Madhya Pradesh 462037", city="Bhopal", phone="07723016773"),
-        #         Hospital(name="Career Hospital Bhopal", address="Kalibadi Rd, A-Sector, Sector A, Habib Ganj, Bhopal, Madhya Pradesh 462023", city="Bhopal", phone="09301099405"),
-        #         Hospital(name="Ojas Hospital Bhopal", address="Plot No. 10-11, Arvind Vihar, opp. central plaza, Main Road, next to HDFC Bank, Bagmugaliya, Bhopal, Madhya Pradesh 462043", city="Bhopal", phone="06232160222"),
-        #         Hospital(name="Bhopal Multispeciality Hospital", address="Indra Vihar Colony, Tilak Nagar, Lalghati, Bhopal, Madhya Pradesh 462030", city="Bhopal", phone="07553551148"),
-        #         Hospital(name="Sagar Multispeciality Hospital", address="SMH, Narmadapuram Rd, near Shri Ram Colony, Shri Ram Colony, Bhopal, Madhya Pradesh 462047", city="Bhopal", phone="07880161616"),
-        #         Hospital(name="ASG Eye Hospital", address="Mahadev Commercial Complex, Shivaji Nagar, Bhopal, Madhya Pradesh 462011", city="Bhopal", phone="06746172350"),
-        #         Hospital(name="Chirayu Hospital", address="Bhopal Byp, Bhainsakhedi, Bairagarh, Bhopal, Madhya Pradesh 462030", city="Bhopal", phone="07552709101"),
-        #         #Ashta
-        #         Hospital(name="Civil Hospital Ashta", address="2PFF+3P7, civil hospital,, Ashta, Madhya Pradesh 466116", city="Ashta", phone=" 07560-245588"),
-        #         Hospital(name="Saniya Hospital", address="Indore bhopal bypass, road, near by Dabri Road, Ashta, Madhya Pradesh 466116", city="Ashta", phone="09424703845"),
-        #         #sehore
-        #         Hospital(name="ASG Eye Hospital, Sehore", address="Plot No. 33, 38/3, 38/4, Sheet No. 122, Englishpura, Sehore, Madhya Pradesh 466001", city="Sehore", phone="06746172551"),
-        #         Hospital(name="District Hospital Sehore", address="River Square, Sewan, Sehore, Madhya Pradesh 466001", city="Sehore", phone=" 07562-226737"),
-                
-        #         #kothri
-        #         Hospital(name="Govt hospital", address="3RGP+V36, Kothri, Madhya Pradesh 466114", city="Kothri", phone="09424703845"),
-        #         #Indorre
-        #         Hospital(name="Apollo Hospitals ", address="Sector-D, Vijay Nagar, Scheme No 74C, Indore, Madhya Pradesh 452010", city="Indore", phone="08069049755"),
-        #         Hospital(name="Indore city hospital ", address="Indore Bypass Rd, DLF Garden City, Manglaya Sadak, Indore, Madhya Pradesh 453771", city="Indore", phone="09244102990"),
-        #         Hospital(name="Medanta Super Specialty Hospital ", address="Plot No. 8, PU04, Commercial Scheme 54, Rasoma Square, Vijaynagar, AB Road, Indore, Madhya Pradesh 452010", city="Indore", phone="07314747185"),
-        #         Hospital(name="Medista Hospital ", address="52/A, Khisnpuri Colony, Udhyog Nagar, Musakhedi, Indore, Madhya Pradesh 452001", city="Indore", phone="08048070141")
-        #     ]
-        #     db.session.add_all(hospitals)
-        #     db.session.commit()
+        # ✅ FIXED ADMIN CREATION
+        admin = User.query.filter_by(email="admin@gmail.com").first()
 
-        # # Add Bhopal doctors
-        # if Doctor.query.count() == 0:
-        #     doctors = [
-        #         Doctor(name="Dr. Sonal Chouksey", specialization="Cardiology", hospital="Nilay Hospital", city="Bhopal", phone="9001111111"),
-        #         Doctor(name="Dr. Nilay Singh Rajput", specialization="General Physician", hospital="Nilay Hospital", city="Bhopal", phone="9002222222"),
-        #         Doctor(name="Dr. Rajesh Gupta", specialization="Orthopedic", hospital="Nilay Hospital", city="Bhopal", phone="9003333333"),
-        #         Doctor(name="Dr. Pooja Singh", specialization="Gynecologist",  hospital="Nilay Hospital", city="Bhopal", phone="9004444444"),
-        #         Doctor(name="Dr. Ankit Jain", specialization="General Physician",hospital="Nilay Hospital",  city="Bhopal", phone="9005555555"),
-        #         Doctor(name="Dr Prateek sharma MD", specialization="Neurology",hospital="Bansal Hospital",  city="Bhopal", phone="9005555555"),
-        #         Doctor(name="Dr. Yogesh Rathore", specialization="Dermatologist",hospital="Advance Skin Clinic, Kolar Road",  city="Bhopal", phone="9005555555")
-        #  ]
+        if not admin:
+            admin = User(
+                name="Admin",
+                email="admin@gmail.com",
+                password=bcrypt.generate_password_hash("admin123").decode("utf-8"),
+                role="admin"
+            )
+            db.session.add(admin)
+            db.session.commit()
 
-        #     db.session.add_all(doctors)
-        #     db.session.commit()
-
-        # # Add Bhopal pharmacies
-        # if Pharmacy.query.count() == 0:
-        #     pharmacies = [
-        #         #bhopal
-        #         Pharmacy(name="Sadan Shah Medical Store", address=" Shop No, Prince Tower, 3, Old Thana Rd, Naveen Nagar, Bhopal, Madhya Pradesh 462010", city="Bhopal", phone="09522228786", open_24hrs=True),
-        #         Pharmacy(name="LifeCare Pharmacy", address="shop no 4 near thane vali masjid shabban chouraha, Jahangirabad, Bhopal, Madhya Pradesh 462008", city="Bhopal", phone="", open_24hrs=False),
-        #         Pharmacy(name="City Medicos", address="New Market", city="Bhopal", phone="9100000003", open_24hrs=True),
-        #         Pharmacy(name="HealthPlus Pharmacy", address="Kolar Road", city="Bhopal", phone="9100000004", open_24hrs=False),
-        #         Pharmacy(name="CITI PHARMACY AND CITI LAB", address="130/1, near State Bank Of India, Zone-II, Maharana Pratap Nagar, Bhopal, Madhya Pradesh 462011", city="Bhopal", phone="07554900480", open_24hrs=False),
-        #         Pharmacy(name="Career Pharmacy 24/7 OPEN", address="BHEL Square, opposite to Dussehra Maidan, Sector A, Govindpura, Bhopal, Madhya Pradesh 462023", city="Bhopal", phone="09303700498", open_24hrs=True),
-        #         Pharmacy(name="Wellness Forever Pharmacy - E-7, Shahpura, Bhopal", address="Bus Stop, near No.10, E-7, Shahpura, Bhopal, Madhya Pradesh 462016", city="Bhopal", phone="08655968437", open_24hrs=False),
-        #         Pharmacy(name="CHARAK PHARMACY", address="Shop No.1 pal Bhavan , Karond chauraha Bhopal, Madhya Pradesh 462010 Ayodhya Bypass Road ", city="Bhopal", phone="06266926433", open_24hrs=False),
-        #         #kothri
-        #         Pharmacy(name="SHRIRAM MEDICAL STORE", address="Pawanchowk road, Kothri, Madhya Pradesh 466114", city="Kothri", phone="09691171557", open_24hrs=False),
-        #         #sehore
-        #         Pharmacy(name="Laxmi Medical Store", address="Kothri, Sehore, NH-86, Sagar Road, Sehore, Sehore, Madhya Pradesh 466114", city="Sehore", phone="", open_24hrs=False),
-        #         Pharmacy(name="Pankaj Medical Store", address="Amlaha, Sehore, NH-86, Sagar Road, Sehore, Sehore, Madhya Pradesh 466113", city="Sehore", phone="", open_24hrs=False),
-        #       #Ashta
-        #         Pharmacy(name="MedPlus Kannod Road", address="House Number 213, Ward 16, Ashta, Madhya Pradesh 466116", city="Ashta", phone="07354934467", open_24hrs=False),
-        #         Pharmacy(name="Mamta medical store ashta", address="Ward no 18 gadripura, opposite government hospital, Sai Colony, Ashta, Madhya Pradesh 466116", city="Ashta", phone="09893001433", open_24hrs=True),
-        #         Pharmacy(name="Tulsi Medical store Ashta", address="Kannod Rd, Bajrang Colony, Ashta, Madhya Pradesh 466116", city="Ashta", phone="09584579626", open_24hrs=True),
-        #         #INDORE
-        #         Pharmacy(name="Wellness Forever Pharmacy - Ranjeet Hanuman Mandir , Indore", address="Plot No. 259, Road, near by Bandhan Bank, Maruti App.Opp.Ranjeet Hanuman Mandir, Usha Nagar, Indore, Madhya Pradesh 452009", city="Indore", phone="09109101584", open_24hrs=True),
-        #         Pharmacy(name="Meera Chemist", address="Vasant Vihar Colony, Indore, Madhya Pradesh 452010", city="Indore", phone="07314997776", open_24hrs=False),
-        #         Pharmacy(name="Gore Pharmacy", address="E-3, HIG Colony, A.B. Road, LIG Main Rd, Indore, Madhya Pradesh 452011", city="Indore", phone="08892011115", open_24hrs=False),
-        #         Pharmacy(name="Wellness Forever Pharmacy - Yashwant Niwas Road, Indore", address="Shop No. 2, Yeshwant Niwas Rd, near ICICI Bank, Maan Sarovar, Indore, Madhya Pradesh 452003", city="Indore", phone="08657524068", open_24hrs=True),
-        #         Pharmacy(name="Apollo Pharmacy Mahatma Gandhi Road", address="Ground Flr, Bansi Trade Centre, No.581, Mahatma Gandhi Rd, opp. Indraprastha Tower, Opp. Jaipur Jewels, Race Course Road, Indore, Madhya Pradesh 452003", city="Indore", phone="07942812471", open_24hrs=False),
-        #         Pharmacy(name="Apollo Pharmacy Mahatma Gandhi Road", address="Ground Flr, Bansi Trade Centre, No.581, Mahatma Gandhi Rd, opp. Indraprastha Tower, Opp. Jaipur Jewels, Race Course Road, Indore, Madhya Pradesh 452003", city="Indore", phone="07942812471", open_24hrs=False),
-        #         Pharmacy(name="Apollo Pharmacy Tulsi Nagar Main Road", address="Ground Floor, Gold Plaza, No.36 & 37, Tulsi Nagar Rd, opp. Apollo DB City, Apollo DB City, Nipania, Indore, Madhya Pradesh 452010", city="Indore", phone="07942812472", open_24hrs=False),
-        #         Pharmacy(name="Goyal Medical Store", address="145, Tilak Nagar Main Rd, Tilak Nagar, Indore, Madhya Pradesh 452018", city="Indore", phone="08103882886", open_24hrs=False),
-
-        #     ]
-            # db.session.add_all(pharmacies)
-            # db.session.commit()
-
-            # if User.query.filter_by(email="admin@gmail.com").first() is None:
-            #     admin_user = User(
-            #  name="Admin",
-            #  email="admin@gmail.com",
-            # password=bcrypt.generate_password_hash("admin123").decode("utf-8"),
-            # role="admin"
-            #  )
-            # db.session.add(admin_user)
-            # db.session.commit()
     app.run(debug=True, port=5000)
+
+        # if User.query.filter_by(email="admin@gmail.com").first() is None:
+        #         admin_user = User(
+        #      name="Admin",
+        #      email="admin@gmail.com",
+        #     password=bcrypt.generate_password_hash("admin123").decode("utf-8"),
+        #     role="admin"
+        #      )
+        #     db.session.add(admin_user)
+        #     db.session.commit()
+    # app.run(debug=True, port=5000)
