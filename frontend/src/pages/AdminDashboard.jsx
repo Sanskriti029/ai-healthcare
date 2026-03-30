@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "/src/api";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowUp, faArrowDown } from "@fortawesome/free-solid-svg-icons";
@@ -25,7 +25,7 @@ const AdminDashboard = () => {
 
   const fetchQueue = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/queue");
+      const res = await api.get("http://localhost:5000/api/queue");
 
       setWaitingQueue(res.data.waiting);
       setConsultationQueue(res.data.consultation);
@@ -44,12 +44,12 @@ const AdminDashboard = () => {
     };
 
     try {
-      const patientsRes = await axios.get(
+      const patientsRes = await api.get(
         "http://localhost:5000/api/patients",
         config,
       );
 
-      const appointRes = await axios.get(
+      const appointRes = await api.get(
         "http://localhost:5000/api/appointments",
         config,
       );
@@ -105,7 +105,7 @@ const AdminDashboard = () => {
     }
 
     try {
-      await axios.put(
+      await api.put(
         `http://localhost:5000/api/appointments/${id}`,
         { status: newStatus },
         {

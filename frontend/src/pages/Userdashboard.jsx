@@ -1,89 +1,193 @@
-
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "/src/api";
+import { useRef } from "react";
 
 const UserDashboard = () => {
   const [appointments, setAppointments] = useState([]);
-  const userId = 1; // replace with logged-in user
+  const [queue, setQueue] = useState([]);
+  const [currentPatient, setCurrentPatient] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+const notifiedRef = useRef(false);
+  const userId = localStorage.getItem("user_id"); // 🔥 Replace with JWT later
 
+  // 📅 Fetch My Appointments
   const fetchAppointments = async () => {
     try {
-      const res = await axios.get(
+      const res = await api.get(
         `http://localhost:5000/api/user/appointments/${userId}`
       );
       setAppointments(res.data);
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching appointments:", err);
+    }
+  };
+useEffect(() => {
+  if (currentPatient?.isMe && !notifiedRef.current) {
+    notifiedRef.current = true;
+
+    // 🔔 Alert popup
+    alert("🩺 It's your turn!");
+
+    // 🔊 Optional sound
+    // const audio = new Audio(
+    //   "https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
+    // );
+    // audio.play();
+
+    // 🌐 Browser notification (optional)
+    if (Notification.permission === "granted") {
+      new Notification("Doctor is ready", {
+        body: "It's your turn now!",
+      });
+    }
+  }
+}, [currentPatient]);
+  // 🔁 Fetch Queue (Polling)
+  const fetchQueue = async () => {
+    try {
+      setRefreshing(true);
+      const res = await api.get("http://localhost:5000/api/queue");
+
+      setQueue(res.data.waiting || []);
+      setCurrentPatient(res.data.consultation?.[0] || null);
+
+      setRefreshing(false);
+    } catch (err) {
+      console.error("Error fetching queue:", err);
+      setRefreshing(false);
     }
   };
 
   useEffect(() => {
     fetchAppointments();
+    fetchQueue();
+
+    // 🔁 Auto refresh every 5 sec
+    const interval = setInterval(() => {
+      fetchQueue();
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
+useEffect(() => {
+  if (Notification.permission !== "granted") {
+    Notification.requestPermission();
+  }
+}, []);
+  // 🎨 Status Colors
+  const getStatusColor = (status) => {
+    if (status === "Pending") return "bg-yellow-500";
+    if (status === "In Consultation") return "bg-blue-500";
+    return "bg-green-600";
+  };
+
+  // 📊 Queue Position
+  const getMyPosition = () => {
+    const index = queue.findIndex((q) => q.isMe);
+    return index >= 0 ? index + 1 : null;
+  };
+
+  const myPosition = getMyPosition();
+  const peopleAhead = myPosition ? myPosition - 1 : 0;
+  const estimatedTime = peopleAhead * 5; // 5 min per patient
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen text-gray-500">
-      <h1 className="text-2xl font-bold mb-6">User Dashboard</h1>
+    <div className="p-6 bg-gray-100 min-h-screen  text-gray-500">
+      <h1 className="text-2xl font-bold mb-6">My Dashboard</h1>
 
-      {/* Appointment List */}
-      <div className="bg-white p-6 rounded-xl shadow">
+      {/* 📅 My Appointments */}
+      <div className="bg-white p-6 rounded-xl shadow mb-6">
         <h2 className="text-xl font-bold mb-4">My Appointments</h2>
 
-        <table className="w-full">
-          <thead>
-            <tr className="border-b text-left">
-              <th>Doctor</th>
-              <th>Department</th>
-              <th>Date</th>
-              <th>Time</th>
-              <th>Priority</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {appointments.map((a) => (
-              <tr key={a.id} className="border-b">
-                <td>{a.doctor_name}</td>
-                <td>{a.department}</td>
-                <td>{a.date}</td>
-                <td>{a.time_slot}</td>
-
-                <td>
-                  <span
-                    className={`px-2 py-1 rounded text-white ${
-                      a.priority === "High"
-                        ? "bg-red-500"
-                        : a.priority === "Medium"
-                        ? "bg-yellow-500"
-                        : "bg-green-500"
-                    }`}
-                  >
-                    {a.priority}
-                  </span>
-                </td>
-
-                <td>
-                  <span
-                    className={`px-2 py-1 rounded text-white ${
-                      a.status === "Pending"
-                        ? "bg-yellow-500"
-                        : a.status === "In Consultation"
-                        ? "bg-blue-500"
-                        : "bg-green-600"
-                    }`}
-                  >
-                    {a.status}
-                  </span>
-                </td>
+        {appointments.length === 0 ? (
+          <p>No appointments found</p>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b text-left">
+                <th>Doctor</th>
+                <th>Department</th>
+                <th>Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {appointments.map((a) => (
+                <tr key={a.id} className="border-b">
+                  <td>{a.doctor_name}</td>
+                  <td>{a.department}</td>
+                  <td>
+                    <span
+                      className={`px-3 py-1 rounded-full text-white ${getStatusColor(
+                        a.status
+                      )}`}
+                    >
+                      {a.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* 🔔 Live Status */}
+      <div className="bg-blue-100 p-6 rounded-xl shadow mb-6">
+        <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
+          Live Status
+          {refreshing && (
+            <span className="text-sm text-gray-600 animate-pulse">
+              updating...
+            </span>
+          )}
+        </h2>
+
+        {currentPatient ? (
+          <div>
+            <p className="text-lg font-semibold">
+              Now Serving: {currentPatient.patient}
+            </p>
+
+            {currentPatient.isMe && (
+              <p className="text-green-700 font-bold">
+                🩺 It's your turn!
+              </p>
+            )}
+          </div>
+        ) : (
+          <p>No active consultation</p>
+        )}
+      </div>
+
+      {/* ⏳ Queue Tracking */}
+      <div className="bg-yellow-100 p-6 rounded-xl shadow">
+        <h2 className="text-xl font-bold mb-2">Queue Status</h2>
+
+        <p>People ahead: {peopleAhead}</p>
+        <p>Estimated time: {estimatedTime} mins</p>
+
+        <div className="mt-4">
+          {queue.length === 0 ? (
+            <p>No one in queue</p>
+          ) : (
+            queue.map((q, index) => (
+              <div
+                key={q.id}
+                className={`flex justify-between p-2 border-b ${
+                  q.isMe ? "bg-green-200 font-semibold" : ""
+                }`}
+              >
+                <span>
+                  {index + 1}. {q.patient}
+                </span>
+                {q.isMe && <span>(You)</span>}
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
 export default UserDashboard;
-

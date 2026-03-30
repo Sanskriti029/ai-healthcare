@@ -8,9 +8,11 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const token = localStorage.getItem("token");
-
+  const role = localStorage.getItem("role");
+  ;
   const logout = () => {
     localStorage.removeItem("token");
+     localStorage.removeItem("role")
     navigate("/login");
   };
 
@@ -21,21 +23,22 @@ const Navbar = () => {
       ? [
           { label: "Symptom Analyzer", path: "/triage" },
           { label: "Appointment", path: "/appointment" },
-          { label: "Dashboard", path: "/dashboard" },
+          // { label: "Dashboard", path: "/dashboard" },
+          { label: "Search", path: "/search" },
+          ...(role === "admin" ? [{ label: "Dashboard", path: "/admin" }] : []),
           // { label: "Healthcare Dashboard", path: "/healthcare-dashboard" },
 
           // { label: "Doctor", path: "/doctors" },
           // { label: "Pharmacy", path: "/pharmacies" },
           // { label: "Hospital", path: "/hospitals" },
-          // { label: "Admin", path: "/admin" },
 
-          { label: "User Dashboard", path: "/user-dashboard" }
+         ...(role === "user" ? [{ label: "Dashboard", path: "/user-dashboard" }] : []), 
         ]
       : []),
   ];
 
   return (
-<header className="sticky top-0 z-50 w-full bg-black border-b border-gray-800 shadow-md">
+    <header className="sticky top-0 z-50 w-full bg-black border-b border-gray-800 shadow-md">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
@@ -54,10 +57,10 @@ const Navbar = () => {
               key={item.path}
               to={item.path}
               className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:bg-teal-800 hover:text-white ${
-  location.pathname === item.path
-    ? "bg-teal-800 text-white"
-    : "text-gray-300 hover:bg-gray-800 hover:text-white"
-}`}
+                location.pathname === item.path
+                  ? "bg-teal-800 text-white"
+                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
+              }`}
             >
               {item.label}
             </Link>

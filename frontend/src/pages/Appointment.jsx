@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation,useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function Appointment() {
   const [patientName, setPatientName] = useState("");
@@ -115,42 +116,45 @@ useEffect(() => {
     }
   };
 
-  const handleSubmit = async () => {
-    if (!date || !timeSlot) {
-      alert("Please select date and time");
-      return;
-    }
+ const handleSubmit = async () => {
+  if (!date || !timeSlot) {
+    alert("Please select date and time");
+    return;
+  }
 
-    const res = await fetch("http://localhost:5000/api/appointments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await axios.post(
+      "http://localhost:5000/api/appointments",
+      {
         patient_name: patientName,
         doctor_id: doctorId,
         date,
         time_slot: timeSlot,
-        priority: priority,
-      }),
-    });
+        priority,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.error || "Slot already booked ❌");
-      return;
-    }
-
-    // ✅ SUCCESS CASE
     alert("Appointment Confirmed ✅");
 
-    // 🔄 refresh availability
+    // refresh availability
     const updated = await fetch(
-      `http://localhost:5000/api/doctors/${doctorId}/availability`,
+      `http://localhost:5000/api/doctors/${doctorId}/availability`
     );
     setAvailability(await updated.json());
 
     setTimeSlot("");
-  };
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.error || "Something went wrong ❌");
+  }
+};
 
   const isPast = (d) => new Date(d) < new Date().setHours(0, 0, 0, 0);
   const getDayColor = (day) => {

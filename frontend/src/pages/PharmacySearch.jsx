@@ -28,7 +28,7 @@ function PharmacySearch() {
       <div className="flex gap-3 mb-8">
         <input
           type="text"
-          placeholder="Enter city (Bhopal)"
+          placeholder="Enter area (Bhopal)"
           value={city}
           onChange={(e) => setCity(e.target.value)}
           className="border p-3 rounded-lg w-64"

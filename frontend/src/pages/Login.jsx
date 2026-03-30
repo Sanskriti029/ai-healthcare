@@ -7,17 +7,32 @@ function Login() {
   const [form, setForm] = useState({});
   const navigate = useNavigate();
 
-  const submit = async (e) => {
+    const submit = async (e) => {
     e.preventDefault();
     const res = await API.post("/login", form);
+// ✅ Extract role properly
+    const role = res.data.role;
+    const token = res.data.token;
+
     localStorage.setItem("token", res.data.token);
-    navigate("/dashboard");
+    localStorage.setItem("role", res.data.role);
+    // localStorage.setItem("token", res.data.token);
+localStorage.setItem("user_id", res.data.user_id);
+    if (role === "admin") {
+      navigate("/admin");
+    } else {
+      navigate("/triage");
+    }
+    
+    
   };
 
    const button = async (e) => {
     e.preventDefault();
     const res = await API.post("/forgetpassword", form);
     localStorage.setItem("token", res.data.token);
+    // localStorage.setItem("token", res.data.token);
+localStorage.setItem("user_id", res.data.user_id);
     navigate("/forgetpassword");
   };
 
