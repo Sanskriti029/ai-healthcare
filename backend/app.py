@@ -22,7 +22,7 @@ from streamlit import user
 app = flask.Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///healthcare.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["JWT_SECRET_KEY"] = "super-secret-key-change-this"
+app.config["JWT_SECRET_KEY"] = "this-is-a-very-long-super-secure-jwt-secret-key-123456"
 
 CORS(app)
 
@@ -720,7 +720,7 @@ def get_hospitals_by_city(city):
 @app.route("/api/hospital/<name>")
 def get_hospital_by_name(name):
     hospital = Hospital.query.filter(
-        Hospital.name.ilike(name)
+        Hospital.name.ilike(f"%{name}%")
     ).first()
 
     if not hospital:
@@ -848,13 +848,4 @@ if __name__ == "__main__":
 
     app.run(debug=True, port=5000)
 
-        # if User.query.filter_by(email="admin@gmail.com").first() is None:
-        #         admin_user = User(
-        #      name="Admin",
-        #      email="admin@gmail.com",
-        #     password=bcrypt.generate_password_hash("admin123").decode("utf-8"),
-        #     role="admin"
-        #      )
-        #     db.session.add(admin_user)
-        #     db.session.commit()
-    # app.run(debug=True, port=5000)
+       
