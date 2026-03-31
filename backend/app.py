@@ -267,8 +267,7 @@ def analyze_symptoms_ai(symptoms):
     if not possible_conditions:
         possible_conditions.append({"name":"General Weakness","probability":"Low","description":"Could be due to stress or mild infection."})
         recommendations.append("Rest and monitor symptoms.")
-
-
+        
     if emergency_flag:
         recommendations.append("🚨 Go to hospital immediately.")
 
@@ -282,10 +281,6 @@ def analyze_symptoms_ai(symptoms):
         "whenToSeeDoctor": "If symptoms persist more than 3 days.",
         "disclaimer": "AI only. Not a medical diagnosis."
     }
-
-
-
-
 
 def admin_required(fn):
     @wraps(fn)
@@ -354,7 +349,6 @@ class Hospital(db.Model):
     city = db.Column(db.String(100))
     phone = db.Column(db.String(20))
 
-
 class Doctor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
@@ -400,7 +394,6 @@ def analyze():
 
     return jsonify(result)
 
-
 @app.route("/api/dashboard/stats")
 @admin_required
 def dashboard_stats():
@@ -418,7 +411,6 @@ def dashboard_stats():
         "emergency": emergency
     })
     
-
 @app.route("/api/patients")
 @admin_required
 def get_patients():
@@ -478,10 +470,6 @@ def create_appointment():
     return jsonify({"message": "Appointment booked"})
 
 
-
-
-
-    
 @app.route("/api/appointments/<int:id>", methods=["PUT"])
 @jwt_required()
 def update_appointment(id):
@@ -685,9 +673,9 @@ def get_pharmacies_by_city(city):
         for p in pharmacies
     ])
 
-@app.route("/api/pharmacies/<area>", methods=["GET"])
+@app.route("/api/pharmacies/area/<area>", methods=["GET"])
 def get_pharmacies_by_area(area):
-    pharmacies = Pharmacy.query.filter(Pharmacy.area.ilike(area)).all()
+    pharmacies = Pharmacy.query.filter(Pharmacy.area.ilike(f"%{area}%")).all()
 
     return jsonify([
         {
@@ -848,4 +836,13 @@ if __name__ == "__main__":
 
     app.run(debug=True, port=5000)
 
-       
+        # if User.query.filter_by(email="admin@gmail.com").first() is None:
+        #         admin_user = User(
+        #      name="Admin",
+        #      email="admin@gmail.com",
+        #     password=bcrypt.generate_password_hash("admin123").decode("utf-8"),
+        #     role="admin"
+        #      )
+        #     db.session.add(admin_user)
+        #     db.session.commit()
+    # app.run(debug=True, port=5000)
