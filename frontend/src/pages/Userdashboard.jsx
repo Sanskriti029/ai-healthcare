@@ -8,8 +8,8 @@ const UserDashboard = () => {
   const [currentPatient, setCurrentPatient] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 const notifiedRef = useRef(false);
-  const userId = localStorage.getItem("user_id"); // 🔥 Replace with JWT later
-
+  const userId = localStorage.getItem("user_id"); 
+  
   // 📅 Fetch My Appointments
   const fetchAppointments = async () => {
     try {
@@ -164,7 +164,7 @@ useEffect(() => {
         <h2 className="text-xl font-bold mb-2">Queue Status</h2>
 
         <p>People ahead: {peopleAhead}</p>
-        <p>Estimated time: {estimatedTime} mins</p>
+        {/* <p>Estimated time: {estimatedTime} mins</p> */}
 
         <div className="mt-4">
           {queue.length === 0 ? (
