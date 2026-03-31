@@ -8,8 +8,8 @@ const UserDashboard = () => {
   const [currentPatient, setCurrentPatient] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 const notifiedRef = useRef(false);
-  const userId = localStorage.getItem("user_id"); 
-  
+  const userId = localStorage.getItem("user_id"); // 🔥 Replace with JWT later
+
   // 📅 Fetch My Appointments
   const fetchAppointments = async () => {
     try {
@@ -35,11 +35,11 @@ useEffect(() => {
     // audio.play();
 
     // 🌐 Browser notification (optional)
-    if (Notification.permission === "granted") {
-      new Notification("Doctor is ready", {
-        body: "It's your turn now!",
-      });
-    }
+    // if (Notification.permission === "granted") {
+    //   new Notification("Doctor is ready", {
+    //     body: "It's your turn now!",
+    //   });
+    // }
   }
 }, [currentPatient]);
   // 🔁 Fetch Queue (Polling)

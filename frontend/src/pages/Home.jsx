@@ -25,8 +25,8 @@ const Home = () => {
     },
     {
       title: "Dashboard",
-      desc: "Admin dashboard to manage doctors and appointments view analytics.",
-      path: "/admin",
+      desc: "User dashboard to manage your health records and view analytics.",
+      path: "/user-dashboard",
     },
     {
       title: "Find Doctors",
