@@ -1,20 +1,39 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Activity, Menu, X } from "lucide-react";
-import { useState } from "react";
-
+import { Activity, Menu, X,Bell} from "lucide-react";
+import { useState,useEffect } from "react";
+import api from "/src/api";
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
-
+const [unreadCount, setUnreadCount] = useState(0);
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
-  ;
+  const userId = localStorage.getItem("user_id");
+ useEffect(() => {
+    if (!token || !userId) return;
+
+    const fetchUnread = async () => {
+      try {
+        const res = await api.get(`/api/messages/${userId}/unread-count`);
+        setUnreadCount(res.data.unread_count);
+      } catch (err) {
+        console.error("Error fetching unread count:", err);
+      }
+    };
+
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 10000); // poll every 10s
+    return () => clearInterval(interval);
+  }, [token, userId]);
+
   const logout = () => {
     localStorage.removeItem("token");
-     localStorage.removeItem("role")
+    localStorage.removeItem("role");
+    localStorage.removeItem("user_id");
     navigate("/login");
   };
+
 
   const navItems = [
     { label: "Home", path: "/" },
@@ -32,7 +51,9 @@ const Navbar = () => {
           // { label: "Pharmacy", path: "/pharmacies" },
           // { label: "Hospital", path: "/hospitals" },
 
-         ...(role === "user" ? [{ label: "Dashboard", path: "/user-dashboard" }] : []), 
+          ...(role === "user"
+            ? [{ label: "Dashboard", path: "/user-dashboard" }]
+            : []),
         ]
       : []),
   ];
@@ -65,7 +86,19 @@ const Navbar = () => {
               {item.label}
             </Link>
           ))}
-
+          {token && (
+            <Link
+              to="/messages"
+              className="relative p-2 hover:bg-gray-700 rounded-lg transition"
+            >
+              <Bell size={20} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold animate-pulse">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </Link>
+          )}
           {!token ? (
             <>
               <Link
@@ -121,6 +154,16 @@ const Navbar = () => {
               {item.label}
             </Link>
           ))}
+
+ {token && (
+            <Link
+              to="/messages"
+              onClick={() => setMobileOpen(false)}
+              className="text-lg hover:text-blue-400 transition flex items-center gap-2"
+            >
+              🔔 Messages {unreadCount > 0 && `(${unreadCount})`}
+            </Link>
+          )}
 
           {!token ? (
             <>
