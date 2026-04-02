@@ -22,6 +22,7 @@ const Triage = () => {
 
       if (data.error) throw new Error(data.error);
       setResult(data);
+      localStorage.setItem("triageId", data.id);
     } catch (err) {
       alert(err.message || "Analysis failed");
     } finally {
@@ -105,12 +106,24 @@ const Triage = () => {
     doc.save("symptom-analysis-report.pdf");
   };
 
-const handleBook = () => {
-  navigate("/appointment", {
-    state: {
-      suggestedDepartment: result.suggestedDepartment
-    }
-  });
+// const handleBook = () => {
+//  navigate(`/appointment?symptoms=${encodeURIComponent(symptoms)}`,{
+//     state: {
+//       suggestedDepartment: result.suggestedDepartment
+//     }
+//   });
+// };
+const goToAppointment = () => {
+  const id = localStorage.getItem("triageId");
+  if (!id) return alert("Analyze first");
+
+  navigate(`/appointment/${id}`);
+};
+const goToPharmacy = () => {
+  const id = localStorage.getItem("triageId");
+  if (!id) return alert("Analyze first");
+
+  navigate(`/pharmacies/${id}`);
 };
   const severityColor = {
     Low: "#22c55e",
@@ -200,7 +213,7 @@ const handleBook = () => {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontWeight: 600, fontSize: 18 ,  color: "#fff",}}>Severity:</span>
+              <span style={{ fontWeight: 600, fontSize: 18 ,  color: "black",}}>Severity:</span>
               <span
                 style={{
                   background: severityColor[result.severity] || "#888",
