@@ -1,6 +1,6 @@
 # 🏥 Smart Healthcare Web Platform
 
-A full-stack healthcare web application that enables users to analyze symptoms, book appointments, find hospitals/pharmacies, and receive real-time updates — built using **React and  Flask, **.
+A full-stack healthcare web application that enables users to analyze symptoms, book appointments, find hospitals/pharmacies, and receive real-time updates — built using **React and  Flask**.
 
 ---
 
