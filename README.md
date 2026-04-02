@@ -21,12 +21,11 @@ A full-stack healthcare web application that enables users to analyze symptoms, 
 * Users input symptoms
 * System analyzes severity
 * Suggests:
-
   * Self-care
   * Doctor consultation
   * Emergency action
-* suggest medicine 
-* suggest doctor for appointment if needed in case of medium and high severity based on doctors availability 
+* Suggest medicine 
+* Suggest doctor for appointment if needed in case of medium and high severity based on doctors availability 
 * Generates downloadable **PDF reports**
 
 ---
@@ -74,19 +73,23 @@ A full-stack healthcare web application that enables users to analyze symptoms, 
 * Monitor appointments
 * Seed initial data
 * Control system operations
+  
+---
 
 ### 🧑‍⚕️ Admin Dashboard
 
 * Monitor appointments
 * Seed initial data
 * Control system operations
-
+  
+---
 ### Messaging & Appointment Notifications
 
 * Displays appointment confirmation messages
 * Fetches real-time data from backend (/api/appointments)
 * Secure access using JWT authentication
 * Clean and structured UI for better readability
+  
 ---
 ### 🎨 Frontend UI (React + Tailwind CSS)
 
@@ -94,7 +97,6 @@ A full-stack healthcare web application that enables users to analyze symptoms, 
 * Clean dashboard layout
 * Gradient buttons & modern styling
 * Mobile-friendly navigation
-* Back button navigation support
 
 ---
 
@@ -117,6 +119,7 @@ A full-stack healthcare web application that enables users to analyze symptoms, 
   * Doctor
   * Appointment
   * Pharmacy
+  * Triage results
 * Seed data support
 
 ---
@@ -135,6 +138,8 @@ A full-stack healthcare web application that enables users to analyze symptoms, 
 * React.js
 * React Router
 * Tailwind CSS
+* TypeScript
+  
 
 ### Backend:
 
