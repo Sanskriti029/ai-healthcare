@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useLocation,useNavigate } from "react-router-dom";
 import axios from "axios";
-
+// import { useParams } from "react-router-dom";
 function Appointment() {
+
+  // const { id } = useParams();
+// const [data, setData] = useState(null);
   const [patientName, setPatientName] = useState("");
   const [doctorId, setDoctorId] = useState("");
   const [doctors, setDoctors] = useState([]);
@@ -214,9 +217,10 @@ useEffect(() => {
       "10:00": "free",
       "11:00": "free",
       "12:00": "free",
-      "14:00": "free",
-      "15:00": "free",
+     
       "16:00": "free",
+      "17:00": "free",
+      "18:00": "free",
     };
 
     const slotsData = availability[date] || defaultSlots;
@@ -236,7 +240,7 @@ useEffect(() => {
   ${
     status === "busy"
       ? "bg-red-200 text-gray-500 cursor-not-allowed"
-      : "bg-green-100 hover:bg-green-200"
+      : "bg-green-100 hover:bg-green-200  text-gray-500"
   }
   ${timeSlot === slot ? "bg-blue-600 text-white" : ""}
 `}
@@ -314,6 +318,9 @@ useEffect(() => {
                   <strong>Hospital:</strong> {selectedDoctor.hospital}
                 </p>
                 <p>
+                  <strong>Experience:</strong> {selectedDoctor.experience} years
+                </p>
+                <p>
                   <strong>City:</strong> {selectedDoctor.city}
                 </p>
                 <p>
@@ -329,11 +336,12 @@ useEffect(() => {
           city: selectedDoctor.city,
           phone: selectedDoctor.phone,
           address: selectedDoctor.address,
+          experience: selectedDoctor.experience
         },
       },
     })
   }
-  className="bg-teal-700 py-2 px-4 text-white rounded hover:bg-teal-800 transition"
+  className="bg-teal-600 py-2 px-4 text-white rounded hover:bg-teal-800 transition"
 >
   See Hospital Details
 </button>
@@ -365,7 +373,7 @@ useEffect(() => {
 
           <button
             onClick={handleSubmit}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700"
+            className="w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700"
           >
             Confirm Booking
           </button>
