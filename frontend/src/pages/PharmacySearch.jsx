@@ -28,7 +28,7 @@ function PharmacySearch() {
   return (
     <div className="p-8 bg-gray-100 min-h-screen text-gray-800">
       <h2 className="text-3xl font-bold mb-6">
-        Find Pharmacies by Area
+        Nearby Pharmacies
       </h2>
 
       <div className="flex gap-3 mb-8">
@@ -42,7 +42,7 @@ function PharmacySearch() {
 
         <button
           onClick={searchPharmacies}
-          className="bg-green-600 text-white px-6 py-3 rounded-lg"
+          className="bg-teal-600 text-white px-6 py-3 rounded-lg"
         >
           Search
         </button>
