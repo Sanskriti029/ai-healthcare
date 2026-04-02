@@ -92,7 +92,7 @@ useEffect(() => {
   const estimatedTime = peopleAhead * 5; // 5 min per patient
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen  text-gray-500">
+    <div className="p-6 bg-gray-100 min-h-screen  text-gray-800">
       <h1 className="text-2xl font-bold mb-6">My Dashboard</h1>
 
       {/* 📅 My Appointments */}
@@ -132,7 +132,7 @@ useEffect(() => {
       </div>
 
       {/* 🔔 Live Status */}
-      <div className="bg-blue-100 p-6 rounded-xl shadow mb-6">
+      <div className="bg-green-100 p-6 rounded-xl shadow mb-6">
         <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
           Live Status
           {refreshing && (
@@ -160,7 +160,7 @@ useEffect(() => {
       </div>
 
       {/* ⏳ Queue Tracking */}
-      <div className="bg-yellow-100 p-6 rounded-xl shadow">
+      <div className="bg-green-100 text-gray-800 p-6 rounded-xl shadow">
         <h2 className="text-xl font-bold mb-2">Queue Status</h2>
 
         <p>People ahead: {peopleAhead}</p>
@@ -173,8 +173,8 @@ useEffect(() => {
             queue.map((q, index) => (
               <div
                 key={q.id}
-                className={`flex justify-between p-2 border-b ${
-                  q.isMe ? "bg-green-200 font-semibold" : ""
+                className={` text-gray-800 flex justify-between p-2  ${
+                  q.isMe ? "  text-gray-800 font-semibold rounded " : ""
                 }`}
               >
                 <span>
