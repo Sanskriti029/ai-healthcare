@@ -16,7 +16,7 @@ import DoctorSearch from "./pages/DoctorSearch";
 import PharmacySearch from "./pages/PharmacySearch";
 import UserDashboard from "./pages/Userdashboard";
 import SearchAll from "./pages/SearchAll";
-
+import Messages from "./pages/Messages";
 import "./index.css";
 function App() {
   return (
@@ -32,6 +32,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
         
           {/* <Route path="/dashboard" element={<AdminDashboard />} /> */}
+          <Route path="/messages" element={<Messages />} />
           <Route path="/doctors" element={<DoctorSearch />} />
           <Route path="/pharmacies" element={<PharmacySearch />} />
           <Route path="/hospitals" element={<HospitalSearch />} />
