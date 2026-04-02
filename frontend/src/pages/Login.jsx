@@ -50,7 +50,7 @@ localStorage.setItem("user_id", res.data.user_id);
         <input
           type="email"
           placeholder="Email"
-          className="border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600"
+          className="border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600 text-gray-800"
           onChange={(e) =>
             setForm({ ...form, email: e.target.value })
           }
@@ -59,7 +59,7 @@ localStorage.setItem("user_id", res.data.user_id);
         <input
           type="password"
           placeholder="Password"
-          className="border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600"
+          className="border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600  text-gray-800"
           onChange={(e) =>
             setForm({ ...form, password: e.target.value })
           }
