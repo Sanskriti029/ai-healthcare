@@ -1,4 +1,14 @@
 # backend/app.py
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+
+
+# Email Configuration
+EMAIL_ADDRESS = "shatabdisingh736@gmail.com"      # Your Gmail
+EMAIL_PASSWORD ="avwv dkvz vuvs dssl" 
+
 from flask import Flask, request, jsonify
 import flask
 from flask_cors import CORS
@@ -10,7 +20,6 @@ from flask_socketio import SocketIO
 from datetime import datetime
 from functools import wraps
 from flask_jwt_extended import get_jwt
-from streamlit import user
 
 
 
@@ -31,7 +40,7 @@ bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 
 from datetime import timedelta
-app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=5)
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=24)
 # -----------------------
 # ADVANCED OFFLINE MEDICAL ANALYZER
 # -----------------------
@@ -132,7 +141,7 @@ def analyze_symptoms_ai(symptoms):
         suggested_medicines.append({"name": "Cough Syrup (Dextromethorphan) (Benadryl / Corex) ", "type":"OTC","dosage":"10ml twice daily",
             "notes": "Follow label instructions."})
         recommendations.append("Drink warm fluids and avoid cold drinks.")
-        severity = update_severity(severity, "Medium")
+        severity = update_severity(severity, "Low")
 
     # ---------------- HEADACHE ----------------
     if "headache" in symptoms_lower:
@@ -367,7 +376,27 @@ class Pharmacy(db.Model):
     phone = db.Column(db.String(20))
     open_24hrs = db.Column(db.Boolean, default=False)
     area = db.Column(db.String(100))  # New field for area/locality
+    
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    type = db.Column(db.String(50), default="info")  # info, success, warning, error
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
 
+def create_message(user_id, title, body, msg_type="info"):
+    msg = Message(
+        user_id=user_id,
+        title=title,
+        body=body,
+        type=msg_type
+    )
+    db.session.add(msg)
+    db.session.commit()
+    return msg
 # -----------------------
 # PUBLIC AI ROUTE
 # -----------------------
@@ -413,6 +442,8 @@ def dashboard_stats():
     
 @app.route("/api/patients")
 @admin_required
+
+
 def get_patients():
     records = Triage.query.all()
     return jsonify([
@@ -466,6 +497,13 @@ def create_appointment():
 
     db.session.add(appointment)
     db.session.commit()
+    # 🔔 Send booking confirmation message
+    create_message(
+        user_id=user_id,
+        title="Appointment Booked ✅",
+        body=f"Your appointment with Dr. {doctor.name} on {data['date']} at {data['time_slot']} has been confirmed. Priority: {data.get('priority', 'Low')}",
+        msg_type="success"
+    )
 
     return jsonify({"message": "Appointment booked"})
 
@@ -483,6 +521,35 @@ def update_appointment(id):
 
     appointment.status = status
     db.session.commit()
+    old_status = data.get("old_status")  # Assuming you pass the old status
+    if status == "Completed":
+        create_message(
+            user_id=appointment.user_id,
+            title="Appointment Completed ✅",
+            body=f"Your appointment with Dr. {appointment.doctor_name} on {appointment.date} has been completed. Thank you for visiting!",
+            msg_type="success"
+        )
+    elif status == "Cancelled":
+        create_message(
+            user_id=appointment.user_id,
+            title="Appointment Cancelled ❌",
+            body=f"Your appointment with Dr. {appointment.doctor_name} on {appointment.date} has been cancelled.",
+            msg_type="error"
+        )
+    elif status == "In Consultation":
+        create_message(
+            user_id=appointment.user_id,
+            title="Your Turn! 🩺",
+            body=f"Dr. {appointment.doctor_name} is ready to see you now. Please proceed to the consultation room.",
+            msg_type="info"
+        )
+    else:
+        create_message(
+            user_id=appointment.user_id,
+            title=f"Appointment Status: {status}",
+            body=f"Your appointment with Dr. {appointment.doctor_name} on {appointment.date} status changed from {old_status} to {status}.",
+            msg_type="info"
+        )
 
     return jsonify({"message": "Appointment updated successfully"})
 
@@ -495,6 +562,14 @@ def delete_appointment(id):
 
     if not appointment:
         return jsonify({"error": "Appointment not found"}), 404
+    
+        # 🔔 Send cancellation message before deleting
+    create_message(
+        user_id=appointment.user_id,
+        title="Appointment Deleted 🗑️",
+        body=f"Your appointment with Dr. {appointment.doctor_name} on {appointment.date} at {appointment.time_slot} has been removed.",
+        msg_type="warning"
+    )
 
     db.session.delete(appointment)
     db.session.commit()
@@ -809,7 +884,54 @@ def triage():
     db.session.commit()
 
     return flask.jsonify(ai_result)
+# -----------------------
+# MESSAGE / NOTIFICATION ROUTES
+# -----------------------
 
+
+@app.route("/api/messages/<int:user_id>", methods=["GET"])
+def get_user_messages(user_id):
+    messages = Message.query.filter_by(user_id=user_id).order_by(Message.created_at.desc()).all()
+    return jsonify([
+        {
+            "id": m.id,
+            "title": m.title,
+            "body": m.body,
+            "type": m.type,
+            "is_read": m.is_read,
+            "created_at": m.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        }
+        for m in messages
+    ])
+
+@app.route("/api/messages/<int:user_id>/unread-count", methods=["GET"])
+def get_unread_count(user_id):
+    count = Message.query.filter_by(user_id=user_id, is_read=False).count()
+    return jsonify({"unread_count": count})
+
+@app.route("/api/messages/read/<int:message_id>", methods=["PUT"])
+def mark_message_read(message_id):
+    msg = Message.query.get(message_id)
+    if not msg:
+        return jsonify({"error": "Message not found"}), 404
+    msg.is_read = True
+    db.session.commit()
+    return jsonify({"message": "Marked as read"})
+
+@app.route("/api/messages/read-all/<int:user_id>", methods=["PUT"])
+def mark_all_read(user_id):
+    Message.query.filter_by(user_id=user_id, is_read=False).update({"is_read": True})
+    db.session.commit()
+    return jsonify({"message": "All messages marked as read"})
+
+@app.route("/api/messages/<int:message_id>", methods=["DELETE"])
+def delete_message(message_id):
+    msg = Message.query.get(message_id)
+    if not msg:
+        return jsonify({"error": "Message not found"}), 404
+    db.session.delete(msg)
+    db.session.commit()
+    return jsonify({"message": "Message deleted"})
 # -----------------------
 # RUN APP
 # -----------------------
@@ -835,14 +957,3 @@ if __name__ == "__main__":
             db.session.commit()
 
     app.run(debug=True, port=5000)
-
-        # if User.query.filter_by(email="admin@gmail.com").first() is None:
-        #         admin_user = User(
-        #      name="Admin",
-        #      email="admin@gmail.com",
-        #     password=bcrypt.generate_password_hash("admin123").decode("utf-8"),
-        #     role="admin"
-        #      )
-        #     db.session.add(admin_user)
-        #     db.session.commit()
-    # app.run(debug=True, port=5000)
